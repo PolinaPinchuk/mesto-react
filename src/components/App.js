@@ -4,6 +4,11 @@ import Main from './Main';
 import Footer from './Footer';
 import PopupWithForm from './PopupWithForm';
 import ImagePopup from './ImagePopup';
+import { api } from '../utils/api';
+import { CurrentUserContext } from '../contexts/CurrentUserContext';
+import EditProfilePopup from './EditProfilePopup';
+import EditAvatarPopup from './EditAvatarPopup';
+import AddPlacePopup from './AddPlacePopup';
 
 function App() {
 
@@ -12,6 +17,30 @@ function App() {
     const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false)
     const [selectedCard, setSelectedCard] = React.useState({})
     const [isImagePopupOpen, setIsImagePopupOpen] = React.useState(false)
+    const [currentUser, setCurrentUser] = React.useState({})
+    const [cards, setCards] = React.useState([])
+
+
+    // Определяем, являемся ли мы владельцем текущей карточки
+    //const isOwn = cards.owner._id === currentUser._id;
+    // Создаём переменную, которую после зададим в `className` для кнопки удаления
+    //const cardDeleteButtonClassName = (
+    //`card__delete-button ${isOwn ? 'card__delete-button_visible' : 'card__delete-button_hidden'}`
+    //);
+    // Определяем, есть ли у карточки лайк, поставленный текущим пользователем
+    //const isLiked = cards.likes.some(i => i._id === currentUser._id);
+    // Создаём переменную, которую после зададим в `className` для кнопки лайка
+    //const cardLikeButtonClassName = `...`;
+
+
+    React.useEffect(() => {
+      Promise.all([api.getProfile(), api.getInitialCards()])
+        .then(([user, initCards]) => {
+          setCards(initCards)
+          setCurrentUser(user)
+        })
+        .catch((err) => console.log(err))
+    }, [])
 
     function handleEditAvatarClick() {
         setIsEditAvatarPopupOpen(true)
@@ -32,10 +61,53 @@ function App() {
         setIsEditProfilePopupOpen(false)
         setIsAddPlacePopupOpen(false)
         setIsImagePopupOpen(false)
-//        setSelectedCard(null)
     }
 
+    function handleCardLike(card) {
+      // Снова проверяем, есть ли уже лайк на этой карточке
+      const isLiked = card.likes.some(i => i._id === currentUser._id);
+      
+      // Отправляем запрос в API и получаем обновлённые данные карточки
+      api.changeLikeCardStatus(card._id, !isLiked).then((newCard) => {
+          setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
+      });
+    } 
+
+    function handleCardDelete(card) {
+      api.deleteCard(card._id).then(() => {
+          setCards(cards.filter((item) => item !== card))
+        })
+    }
+
+    function handleUpdateUser(userItem) {
+      api.editProfile(userItem)
+        .then((item) => {
+          setCurrentUser(item)
+          closeAllPopups()
+        })
+        .catch((err) => console.log(err))
+    }
+
+    function handleUpdateAvatar(userAvatar) {
+      api.editAvatar(userAvatar)
+        .then((item) => {
+          setCurrentUser(item)
+          closeAllPopups()
+        })
+        .catch((err) => console.log(err))
+    }
+
+    function handleAddPlaceSubmit(dataNewCard) {
+      api.addCard(dataNewCard)
+        .then((newCard) => {
+          setCards([newCard, ...cards]);
+          closeAllPopups()
+        })
+        .catch((err) => console.log(err))
+    }
+ 
   return (
+    <CurrentUserContext.Provider value={currentUser}>
     <div className="App">
 
     <div className="page">
@@ -48,35 +120,17 @@ function App() {
         onEditProfile={handleEditProfileClick}
         onAddPlace={handleAddPlaceClick}
         onCardClick={handleCardClick}
+        cards={cards}
+        onCardLike={handleCardLike}
+        onCardDelete={handleCardDelete}
         />
 
-        <PopupWithForm isOpen={isEditProfilePopupOpen} name="edit-form" onClose={closeAllPopups} 
-        title="Редактировать профиль" button="Сохранить">
-                    <input id="name" className="popup__input" type="text" required minLength="2" maxLength="40" 
-                    placeholder="Имя" name="name"/>
-                    <span className="name-error popup__input-error"></span>
-                    <input id="job" className="popup__input" type="text" required minLength="2" maxLength="200" 
-                    placeholder="О себе" name="job"/>
-                    <span className="job-error popup__input-error"></span>
-        </PopupWithForm>
-        <PopupWithForm isOpen={isAddPlacePopupOpen} name="add-form" onClose={closeAllPopups} title="Новое место" 
-        button="Создать">
-                    <input id="place" className="popup__input" type="text" required minLength="2" maxLength="30" 
-                    placeholder="Название" name="place"/>
-                    <span className="place-error popup__input-error"></span>
-                    <input id="link" className="popup__input" type="url" required placeholder="Ссылка на картинку" 
-                    name="link"/>
-                    <span className="link-error popup__input-error"></span>
-        </PopupWithForm>
-        <PopupWithForm isOpen={isEditAvatarPopupOpen} name="add-form" onClose={closeAllPopups} 
-        title="Обновить аватар" button="Сохранить">
-                    <input type="url" placeholder="Ссылка на аватар" className="popup__input" required id="avatar" name="avatar" autoComplete="off"/>
-                    <span className="avatar-error popup__input-error"></span>
-        </PopupWithForm>
+        <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} onUpdateUser={handleUpdateUser}/> 
+        <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} onAddPlace={handleAddPlaceSubmit}/>
+        <EditAvatarPopup isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups} onUpdateAvatar={handleUpdateAvatar}/> 
         <PopupWithForm name="add-form" onClose={closeAllPopups} title="Вы уверены?" button="Да">
         </PopupWithForm>
-        <ImagePopup card={selectedCard}  isOpen={isImagePopupOpen} onClose={closeAllPopups}/>
-                           
+        <ImagePopup card={selectedCard}  isOpen={isImagePopupOpen} onClose={closeAllPopups}/>                          
          <Footer />
       
         </div>
@@ -84,6 +138,7 @@ function App() {
     </div>
 
     </div>
+    </CurrentUserContext.Provider>
   );
 }
 

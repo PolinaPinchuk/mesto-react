@@ -55,16 +55,16 @@ editAvatar(item) {
 
 // ДОБАВЛЕНИЕ НОВОЙ КАРТОЧКИ
 
-    addCard(name, link) {
-      return fetch (`${this._baseUrl}/cards`, {
-          method: "POST",
-          headers: this._headers,
-          body: JSON.stringify({
-            name, 
-            link
-          })
-      }).then(this._checkResponse)
-    }
+addCard(data) {
+  return fetch (`${this._baseUrl}/cards`, {
+      method: "POST",
+      headers: this._headers,
+      body: JSON.stringify({
+        name: data.name, 
+        link: data.link
+      })
+  }).then(this._checkResponse)
+}
 
 // УДАЛЕНИЕ КАРТОЧКИ
 
