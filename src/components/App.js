@@ -20,19 +20,6 @@ function App() {
     const [currentUser, setCurrentUser] = React.useState({})
     const [cards, setCards] = React.useState([])
 
-
-    // Определяем, являемся ли мы владельцем текущей карточки
-    //const isOwn = cards.owner._id === currentUser._id;
-    // Создаём переменную, которую после зададим в `className` для кнопки удаления
-    //const cardDeleteButtonClassName = (
-    //`card__delete-button ${isOwn ? 'card__delete-button_visible' : 'card__delete-button_hidden'}`
-    //);
-    // Определяем, есть ли у карточки лайк, поставленный текущим пользователем
-    //const isLiked = cards.likes.some(i => i._id === currentUser._id);
-    // Создаём переменную, которую после зададим в `className` для кнопки лайка
-    //const cardLikeButtonClassName = `...`;
-
-
     React.useEffect(() => {
       Promise.all([api.getProfile(), api.getInitialCards()])
         .then(([user, initCards]) => {
@@ -68,15 +55,17 @@ function App() {
       const isLiked = card.likes.some(i => i._id === currentUser._id);
       
       // Отправляем запрос в API и получаем обновлённые данные карточки
-      api.changeLikeCardStatus(card._id, !isLiked).then((newCard) => {
+      api.addLike(card._id, !isLiked).then((newCard) => {
           setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
-      });
+      })
+      .catch((err) => console.log(err))
     } 
 
     function handleCardDelete(card) {
       api.deleteCard(card._id).then(() => {
           setCards(cards.filter((item) => item !== card))
         })
+        .catch((err) => console.log(err))
     }
 
     function handleUpdateUser(userItem) {

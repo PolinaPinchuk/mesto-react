@@ -30,6 +30,8 @@ const currentUser = React.useContext(CurrentUserContext);
                 link={newCard.link}
                 likes={newCard.likes.length}
                 onCardClick={props.onCardClick}
+                onCardLike={props.onCardLike}
+                onCardDelete={props.onCardDelete}
               />)
             })}
         </section>
