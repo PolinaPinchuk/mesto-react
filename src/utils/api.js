@@ -75,24 +75,15 @@ addCard(data) {
       }).then(this._checkResponse)
     }
 
-// СНЯТИЕ ЛАЙКА
-
-    deleteLike(id) {
-      return fetch (`${this._baseUrl}/cards/likes/${id}`, {
-          method: "DELETE",
-          headers: this._headers
-      }).then(this._checkResponse)
-    }
-  
-// ПОСТАНОВКА ЛАЙКА
-
-  addLike(id) {
-      return fetch (`${this._baseUrl}/cards/likes/${id}`, {
-          method: "PUT",
-          headers: this._headers
-      }).then(this._checkResponse)
-    }
+// ПОСТАНОВКА И СНЯТИЕ ЛАЙКА
+  changeLikeCardStatus(id, isLiked) {
+    return fetch(`${this._baseUrl}/cards/likes/${id}`, {
+      method: `${isLiked ?'PUT':'DELETE'}`,
+      headers: this._headers
+    })
+      .then(this._checkResponse)
   }
+}
   
   export const api = new Api({
     baseUrl: 'https://mesto.nomoreparties.co/v1/cohort-44',
